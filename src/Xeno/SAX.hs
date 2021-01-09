@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE BinaryLiterals      #-}
+{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE MultiWayIf          #-}
 {-# LANGUAGE NamedFieldPuns      #-}
@@ -295,8 +296,14 @@ process !(Process {openF, attrF, endOpenF, textF, closeF, cdataF}) str = findLT 
         else if s_index' str index == closeTagChar
                then pure (Right index)
                else let afterAttrName = parseName str index
+#ifdef WHITESPACE_AROUND_EQUALS
+                        beforeEquals = skipSpaces str afterAttrName
+                    in if s_index' str beforeEquals == equalChar
+                         then let quoteIndex = skipSpaces str (beforeEquals + 1)
+#else
                     in if s_index' str afterAttrName == equalChar
                          then let quoteIndex = afterAttrName + 1
+#endif
                                   usedChar = s_index' str quoteIndex
                               in if usedChar == quoteChar ||
                                     usedChar == doubleQuoteChar
